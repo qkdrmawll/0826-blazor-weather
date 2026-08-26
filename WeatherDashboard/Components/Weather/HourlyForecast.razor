@@ -1,19 +1,56 @@
-@* HourlyForecast: 시간별 예보. 세부 UI는 #3에서 구현 예정. *@
+@* HourlyForecast: 시간별 예보. 현재 이후 8개 시점을 렌더링. *@
 @using WeatherDashboard.Models
 
-<div class="weather-card hourly-forecast">
-    @if (Items is null || Items.Count == 0)
+<section class="weather-card hourly-forecast" aria-label="시간별 예보">
+    <h2 class="forecast-title">시간별 예보</h2>
+
+    @{
+        var items = GetVisibleItems();
+    }
+
+    @if (items.Count == 0)
     {
-        <p class="placeholder-text">시간별 예보 — 구현 예정 (#3)</p>
+        <p class="placeholder-text">표시할 시간별 예보가 없습니다.</p>
     }
     else
     {
-        <p class="placeholder-text">시간별 예보 @Items.Count 건 (구현 예정 #3)</p>
+        <ul class="hourly-list" role="list">
+            @foreach (var item in items)
+            {
+                <li class="hourly-item"
+                    aria-label="@($"{item.Time:HH:mm} {item.Condition.Description}, 기온 {item.Temperature:0}도, 강수확률 {item.PrecipitationProbability ?? 0}퍼센트")">
+                    <span class="hourly-time tabular">@item.Time.ToString("HH:mm")</span>
+                    <span class="hourly-emoji" role="img" aria-label="@item.Condition.Description">@item.Condition.Emoji</span>
+                    <span class="hourly-temp tabular">@item.Temperature.ToString("0")℃</span>
+                    <span class="hourly-pop tabular">💧 @(item.PrecipitationProbability ?? 0)%</span>
+                </li>
+            }
+        </ul>
     }
-</div>
+</section>
 
 @code {
-    /// <summary>시간별 예보 항목. #3에서 세부 렌더링을 채운다.</summary>
+    /// <summary>시간별 예보 항목(#1의 모델). 현재 이후 8개 시점을 표시한다.</summary>
     [Parameter]
     public IReadOnlyList<HourlyForecastItem>? Items { get; set; }
+
+    /// <summary>표시 시점 개수.</summary>
+    private const int VisibleCount = 8;
+
+    /// <summary>현재 이후의 항목을 최대 8개 선택한다. 데이터가 없으면 빈 목록.</summary>
+    private IReadOnlyList<HourlyForecastItem> GetVisibleItems()
+    {
+        if (Items is null || Items.Count == 0)
+        {
+            return Array.Empty<HourlyForecastItem>();
+        }
+
+        var now = DateTime.Now;
+        var upcoming = Items.Where(i => i.Time >= now).ToList();
+
+        // 현재 이후 항목이 없으면(과거 데이터만 있는 경우) 전체에서 앞쪽을 사용.
+        var source = upcoming.Count > 0 ? upcoming : Items;
+
+        return source.OrderBy(i => i.Time).Take(VisibleCount).ToList();
+    }
 }
