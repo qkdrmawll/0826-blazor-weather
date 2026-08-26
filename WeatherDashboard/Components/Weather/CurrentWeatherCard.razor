@@ -1,21 +1,50 @@
-@* CurrentWeatherCard: 현재 날씨 카드. 세부 UI는 #2에서 구현 예정. *@
+@* CurrentWeatherCard: 현재 날씨 카드. *@
+@using System.Globalization
 @using WeatherDashboard.Models
 
-<div class="weather-card current-weather-card">
+<section class="weather-card current-weather-card" aria-label="현재 날씨">
     @if (Weather is null)
     {
-        <p class="placeholder-text">현재 날씨 카드 — 구현 예정 (#2)</p>
+        <p class="placeholder-text">도시를 검색하면 현재 날씨가 여기에 표시됩니다.</p>
     }
     else
     {
-        <p class="placeholder-text">
-            @Weather.Location.DisplayName · @Weather.Current.Condition.Display · @Weather.Current.Temperature.ToString("0.#")℃
+        var current = Weather.Current;
+        var condition = current.Condition;
+
+        <header class="current-weather-header">
+            <h2 class="current-weather-location">@Weather.Location.DisplayName</h2>
+            <p class="current-weather-condition" aria-label="@($"날씨 상태: {condition.Description}")">
+                <span class="current-weather-emoji" aria-hidden="true">@condition.Emoji</span>
+                <span class="current-weather-desc">@condition.Description</span>
+            </p>
+        </header>
+
+        <p class="current-weather-temperature" aria-label="@($"기온 {Format(current.Temperature)} 섭씨")">
+            <span class="temp-value tabular-nums">@Format(current.Temperature)</span><span class="temp-unit">℃</span>
         </p>
+
+        <dl class="current-weather-metrics">
+            <div class="metric">
+                <dt>체감온도</dt>
+                <dd class="tabular-nums" aria-label="@($"체감온도 {Format(current.ApparentTemperature)} 섭씨")">@Format(current.ApparentTemperature)℃</dd>
+            </div>
+            <div class="metric">
+                <dt>습도</dt>
+                <dd class="tabular-nums" aria-label="@($"습도 {current.RelativeHumidity} 퍼센트")">@current.RelativeHumidity%</dd>
+            </div>
+            <div class="metric">
+                <dt>풍속</dt>
+                <dd class="tabular-nums" aria-label="@($"풍속 초당 {Format(current.WindSpeed)} 미터")">@Format(current.WindSpeed) m/s</dd>
+            </div>
+        </dl>
     }
-</div>
+</section>
 
 @code {
-    /// <summary>표시할 통합 날씨 결과. #2에서 세부 렌더링을 채운다.</summary>
+    /// <summary>표시할 통합 날씨 결과.</summary>
     [Parameter]
     public WeatherResult? Weather { get; set; }
+
+    private static string Format(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
 }
