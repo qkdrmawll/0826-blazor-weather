@@ -267,3 +267,10 @@ h1:focus {
 .daily-temp-min {
     color: #1b6ec2;
 }
+
+.temp-cue {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #888;
+    margin-right: 0.15rem;
+}

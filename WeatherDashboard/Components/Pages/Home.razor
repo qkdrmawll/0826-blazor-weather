@@ -35,7 +35,7 @@
 
     <section class="results-area">
         <CurrentWeatherCard Weather="_weather" />
-        <HourlyForecast Items="_weather?.Hourly" />
+        <HourlyForecast Items="_weather?.Hourly" ReferenceTime="_weather?.Current.Time" />
         <DailyForecast Items="_weather?.Daily" />
     </section>
 </div>

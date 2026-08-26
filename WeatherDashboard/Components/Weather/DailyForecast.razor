@@ -19,16 +19,16 @@
             @foreach (var item in items)
             {
                 <li class="daily-item"
-                    aria-label="@($"{GetWeekday(item.Date)}요일 {item.Condition.Description}, 최고 {item.TemperatureMax:0}도, 최저 {item.TemperatureMin:0}도, 강수확률 {item.PrecipitationProbabilityMax ?? 0}퍼센트")">
-                    <span class="daily-day">@GetWeekday(item.Date)</span>
-                    <span class="daily-condition">
-                        <span class="daily-emoji" role="img" aria-label="@item.Condition.Description">@item.Condition.Emoji</span>
+                    aria-label="@($"{GetWeekday(item.Date)}요일 {item.Condition.Description}, 최고 {item.TemperatureMax:0}도, 최저 {item.TemperatureMin:0}도, 강수확률 {PopLabel(item.PrecipitationProbabilityMax)}")">
+                    <span class="daily-day" aria-hidden="true">@GetWeekday(item.Date)</span>
+                    <span class="daily-condition" aria-hidden="true">
+                        <span class="daily-emoji">@item.Condition.Emoji</span>
                         <span class="daily-desc">@item.Condition.Description</span>
                     </span>
-                    <span class="daily-pop tabular">💧 @(item.PrecipitationProbabilityMax ?? 0)%</span>
-                    <span class="daily-temp">
-                        <span class="daily-temp-max tabular">@item.TemperatureMax.ToString("0")°</span>
-                        <span class="daily-temp-min tabular">@item.TemperatureMin.ToString("0")°</span>
+                    <span class="daily-pop tabular" aria-hidden="true">💧 @PopLabel(item.PrecipitationProbabilityMax)</span>
+                    <span class="daily-temp" aria-hidden="true">
+                        <span class="daily-temp-max tabular"><span class="temp-cue">최고</span> @item.TemperatureMax.ToString("0")°</span>
+                        <span class="daily-temp-min tabular"><span class="temp-cue">최저</span> @item.TemperatureMin.ToString("0")°</span>
                     </span>
                 </li>
             }
@@ -59,4 +59,8 @@
     private static string GetWeekday(DateOnly date) =>
         date.ToDateTime(TimeOnly.MinValue)
             .ToString("ddd", CultureInfo.GetCultureInfo("ko-KR"));
+
+    /// <summary>강수확률을 표시용 문자열로 변환. null 이면 정보 없음("—").</summary>
+    private static string PopLabel(int? probability) =>
+        probability is int p ? $"{p}%" : "—";
 }
