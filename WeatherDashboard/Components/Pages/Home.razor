@@ -15,21 +15,24 @@
 
     <section class="search-area">
         <EditForm Model="this" OnValidSubmit="SearchAsync">
-            <div class="search-bar">
-                <InputText @bind-Value="_city" class="search-input" placeholder="예: 서울, Tokyo, London" />
-                <button type="submit" class="search-button" disabled="@_isLoading">검색</button>
+            <div class="search-bar" role="search">
+                <InputText @bind-Value="_city" class="search-input"
+                           placeholder="예: 서울, Tokyo, London"
+                           aria-label="도시명 검색" />
+                <button type="submit" class="search-button" disabled="@_isLoading"
+                        aria-label="날씨 검색">검색</button>
             </div>
         </EditForm>
     </section>
 
-    <section class="status-area">
+    <section class="status-area" aria-live="polite">
         @if (_isLoading)
         {
-            <p class="status status-loading">불러오는 중…</p>
+            <p class="status status-loading" role="status">불러오는 중…</p>
         }
         else if (_error is not null)
         {
-            <p class="status status-error">@_error</p>
+            <p class="status status-error" role="alert">@_error</p>
         }
     </section>
 
@@ -41,28 +44,43 @@
 </div>
 
 @code {
+    private const string DefaultCity = "서울";
+
     private string _city = string.Empty;
     private bool _isLoading;
     private string? _error;
     private WeatherResult? _weather;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 초기 진입 시 기본 도시(서울)를 자동 조회한다.
+        _city = DefaultCity;
+        await LoadWeatherAsync(DefaultCity);
+    }
 
     private async Task SearchAsync()
     {
         if (string.IsNullOrWhiteSpace(_city))
         {
             _error = "도시명을 입력해 주세요.";
+            _weather = null;
             return;
         }
 
+        await LoadWeatherAsync(_city);
+    }
+
+    private async Task LoadWeatherAsync(string city)
+    {
         _isLoading = true;
         _error = null;
 
         try
         {
-            var result = await WeatherService.GetWeatherByCityAsync(_city);
+            var result = await WeatherService.GetWeatherByCityAsync(city);
             if (result is null)
             {
-                _error = $"'{_city}' 도시를 찾을 수 없습니다.";
+                _error = $"'{city}' 도시를 찾을 수 없습니다.";
                 _weather = null;
             }
             else
