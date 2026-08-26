@@ -1,0 +1,21 @@
+@* CurrentWeatherCard: 현재 날씨 카드. 세부 UI는 #2에서 구현 예정. *@
+@using WeatherDashboard.Models
+
+<div class="weather-card current-weather-card">
+    @if (Weather is null)
+    {
+        <p class="placeholder-text">현재 날씨 카드 — 구현 예정 (#2)</p>
+    }
+    else
+    {
+        <p class="placeholder-text">
+            @Weather.Location.DisplayName · @Weather.Current.Condition.Display · @Weather.Current.Temperature.ToString("0.#")℃
+        </p>
+    }
+</div>
+
+@code {
+    /// <summary>표시할 통합 날씨 결과. #2에서 세부 렌더링을 채운다.</summary>
+    [Parameter]
+    public WeatherResult? Weather { get; set; }
+}
