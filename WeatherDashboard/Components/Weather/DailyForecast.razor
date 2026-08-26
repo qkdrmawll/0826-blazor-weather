@@ -1,19 +1,62 @@
-@* DailyForecast: 일별 예보. 세부 UI는 #3에서 구현 예정. *@
+@* DailyForecast: 일별 예보. 5일치를 렌더링. *@
+@using System.Globalization
 @using WeatherDashboard.Models
 
-<div class="weather-card daily-forecast">
-    @if (Items is null || Items.Count == 0)
+<section class="weather-card daily-forecast" aria-label="일별 예보">
+    <h2 class="forecast-title">일별 예보</h2>
+
+    @{
+        var items = GetVisibleItems();
+    }
+
+    @if (items.Count == 0)
     {
-        <p class="placeholder-text">일별 예보 — 구현 예정 (#3)</p>
+        <p class="placeholder-text">표시할 일별 예보가 없습니다.</p>
     }
     else
     {
-        <p class="placeholder-text">일별 예보 @Items.Count 일 (구현 예정 #3)</p>
+        <ul class="daily-list" role="list">
+            @foreach (var item in items)
+            {
+                <li class="daily-item"
+                    aria-label="@($"{GetWeekday(item.Date)}요일 {item.Condition.Description}, 최고 {item.TemperatureMax:0}도, 최저 {item.TemperatureMin:0}도, 강수확률 {item.PrecipitationProbabilityMax ?? 0}퍼센트")">
+                    <span class="daily-day">@GetWeekday(item.Date)</span>
+                    <span class="daily-condition">
+                        <span class="daily-emoji" role="img" aria-label="@item.Condition.Description">@item.Condition.Emoji</span>
+                        <span class="daily-desc">@item.Condition.Description</span>
+                    </span>
+                    <span class="daily-pop tabular">💧 @(item.PrecipitationProbabilityMax ?? 0)%</span>
+                    <span class="daily-temp">
+                        <span class="daily-temp-max tabular">@item.TemperatureMax.ToString("0")°</span>
+                        <span class="daily-temp-min tabular">@item.TemperatureMin.ToString("0")°</span>
+                    </span>
+                </li>
+            }
+        </ul>
     }
-</div>
+</section>
 
 @code {
-    /// <summary>일별 예보 항목. #3에서 세부 렌더링을 채운다.</summary>
+    /// <summary>일별 예보 항목(#1의 모델). 최대 5일치를 표시한다.</summary>
     [Parameter]
     public IReadOnlyList<DailyForecastItem>? Items { get; set; }
+
+    /// <summary>표시 일수.</summary>
+    private const int VisibleCount = 5;
+
+    /// <summary>날짜순으로 최대 5일치를 선택한다. 데이터가 없으면 빈 목록.</summary>
+    private IReadOnlyList<DailyForecastItem> GetVisibleItems()
+    {
+        if (Items is null || Items.Count == 0)
+        {
+            return Array.Empty<DailyForecastItem>();
+        }
+
+        return Items.OrderBy(i => i.Date).Take(VisibleCount).ToList();
+    }
+
+    /// <summary>한글 요일(예: "월").</summary>
+    private static string GetWeekday(DateOnly date) =>
+        date.ToDateTime(TimeOnly.MinValue)
+            .ToString("ddd", CultureInfo.GetCultureInfo("ko-KR"));
 }
