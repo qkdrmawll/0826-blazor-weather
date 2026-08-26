@@ -1,0 +1,19 @@
+@* DailyForecast: 일별 예보. 세부 UI는 #3에서 구현 예정. *@
+@using WeatherDashboard.Models
+
+<div class="weather-card daily-forecast">
+    @if (Items is null || Items.Count == 0)
+    {
+        <p class="placeholder-text">일별 예보 — 구현 예정 (#3)</p>
+    }
+    else
+    {
+        <p class="placeholder-text">일별 예보 @Items.Count 일 (구현 예정 #3)</p>
+    }
+</div>
+
+@code {
+    /// <summary>일별 예보 항목. #3에서 세부 렌더링을 채운다.</summary>
+    [Parameter]
+    public IReadOnlyList<DailyForecastItem>? Items { get; set; }
+}

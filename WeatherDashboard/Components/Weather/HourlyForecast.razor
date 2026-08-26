@@ -1,0 +1,19 @@
+@* HourlyForecast: 시간별 예보. 세부 UI는 #3에서 구현 예정. *@
+@using WeatherDashboard.Models
+
+<div class="weather-card hourly-forecast">
+    @if (Items is null || Items.Count == 0)
+    {
+        <p class="placeholder-text">시간별 예보 — 구현 예정 (#3)</p>
+    }
+    else
+    {
+        <p class="placeholder-text">시간별 예보 @Items.Count 건 (구현 예정 #3)</p>
+    }
+</div>
+
+@code {
+    /// <summary>시간별 예보 항목. #3에서 세부 렌더링을 채운다.</summary>
+    [Parameter]
+    public IReadOnlyList<HourlyForecastItem>? Items { get; set; }
+}
