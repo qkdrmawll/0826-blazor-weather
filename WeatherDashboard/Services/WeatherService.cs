@@ -16,6 +16,40 @@ public sealed class WeatherService : IWeatherService
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>
+    /// Open-Meteo 지오코딩이 매칭하지 못하는 한글 도시명 → 영문명 별칭.
+    /// 직접 검색이 실패했을 때만 폴백으로 사용한다.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> CityNameAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["서울"] = "Seoul",
+            ["서울시"] = "Seoul",
+            ["부산"] = "Busan",
+            ["인천"] = "Incheon",
+            ["대구"] = "Daegu",
+            ["대전"] = "Daejeon",
+            ["광주"] = "Gwangju",
+            ["울산"] = "Ulsan",
+            ["세종"] = "Sejong",
+            ["수원"] = "Suwon",
+            ["성남"] = "Seongnam",
+            ["고양"] = "Goyang",
+            ["용인"] = "Yongin",
+            ["창원"] = "Changwon",
+            ["청주"] = "Cheongju",
+            ["전주"] = "Jeonju",
+            ["천안"] = "Cheonan",
+            ["김해"] = "Gimhae",
+            ["포항"] = "Pohang",
+            ["제주"] = "Jeju",
+            ["춘천"] = "Chuncheon",
+            ["강릉"] = "Gangneung",
+            ["원주"] = "Wonju",
+            ["여수"] = "Yeosu",
+            ["목포"] = "Mokpo",
+        };
+
     private readonly HttpClient _httpClient;
 
     public WeatherService(HttpClient httpClient) => _httpClient = httpClient;
@@ -27,11 +61,16 @@ public sealed class WeatherService : IWeatherService
             return null;
         }
 
-        var url = $"{GeocodingUrl}?name={Uri.EscapeDataString(city.Trim())}&count=1&language=ko&format=json";
-        var dto = await _httpClient.GetFromJsonAsync<GeocodingResponseDto>(url, JsonOptions, cancellationToken)
-            .ConfigureAwait(false);
+        var query = city.Trim();
+        var result = await GeocodeAsync(query, cancellationToken).ConfigureAwait(false);
 
-        var result = dto?.Results?.FirstOrDefault();
+        // Open-Meteo 지오코딩은 일부 짧은 한글 도시명(예: "서울")을 인덱싱하지 못한다.
+        // 직접 검색이 실패하면 한글→영문 별칭으로 재시도한다.
+        if (result is null && CityNameAliases.TryGetValue(query, out var alias))
+        {
+            result = await GeocodeAsync(alias, cancellationToken).ConfigureAwait(false);
+        }
+
         if (result is null)
         {
             return null;
@@ -46,6 +85,15 @@ public sealed class WeatherService : IWeatherService
             Admin1 = result.Admin1,
             Timezone = result.Timezone,
         };
+    }
+
+    private async Task<GeocodingResultDto?> GeocodeAsync(string name, CancellationToken cancellationToken)
+    {
+        var url = $"{GeocodingUrl}?name={Uri.EscapeDataString(name)}&count=1&language=ko&format=json";
+        var dto = await _httpClient.GetFromJsonAsync<GeocodingResponseDto>(url, JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+
+        return dto?.Results?.FirstOrDefault();
     }
 
     public async Task<WeatherResult> GetWeatherAsync(GeoLocation location, CancellationToken cancellationToken = default)
